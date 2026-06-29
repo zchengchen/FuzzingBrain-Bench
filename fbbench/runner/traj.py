@@ -49,9 +49,15 @@ def _grade_out(result: dict) -> tuple[str, bool]:
     if not isinstance(ho, dict):
         return _short(str(result), 80), False
     exit_code, sig = ho.get("exit_code"), ho.get("signal") or ""
+    stdout = ho.get("stdout") or ""
     stderr = ho.get("stderr") or ""
     m = _CRASH_RE.search(stderr)
-    crash = bool(sig) or bool(m) or (exit_code not in (0, None) and bool(m))
+    # Mirror the oracle's crashFired guard (tools/mcp-server/grade.go): a bare
+    # terminating signal with NO output is the kernel-6.17 ASan startup flake,
+    # not an input-triggered crash — so it must NOT be marked as a fault here,
+    # or the trajectory's 💥 would contradict a not_fired score.
+    has_output = bool(stderr.strip()) or bool(stdout.strip())
+    crash = bool(m) or (bool(sig) and has_output)
     parts = [f"exit={exit_code}"]
     if sig:
         parts.append(f"sig={sig}")
