@@ -35,6 +35,9 @@ dev = ["pytest>=7.0"]
 [tool.setuptools.packages.find]
 include = ["fbbench*"]
 
+[tool.setuptools.package-data]
+"fbbench.report" = ["*.html"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

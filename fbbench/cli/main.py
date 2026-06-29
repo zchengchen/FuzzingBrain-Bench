@@ -71,9 +71,9 @@ def build_parser() -> argparse.ArgumentParser:
     sp_traj.set_defaults(fn=commands.cmd_traj)
 
     sp_report = sub.add_parser("report",
-                               help="(re)generate the browsable report.html for a finished run dir")
+                               help="(re)generate report.html for a run dir, or index.html for a sweep/exp dir")
     sp_report.add_argument("run_dir",
-                           help="a run/cell dir containing score.json + transcript.jsonl")
+                           help="a run/cell dir (-> report.html) or a sweep exp dir (-> index.html)")
     sp_report.set_defaults(fn=commands.cmd_report)
 
     sub.add_parser("models",

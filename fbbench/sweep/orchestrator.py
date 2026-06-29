@@ -223,8 +223,19 @@ def main() -> int:
                 else:
                     print(f"      -> FAILED: {r.get('error') if r else 'unknown'}", flush=True)
 
-    print(f"\n  done in {time.time()-t0:.0f}s, spent ~${STATUS.total_cost:.2f} this run")
+    elapsed = time.time() - t0
+    print(f"\n  done in {elapsed:.0f}s, spent ~${STATUS.total_cost:.2f} this run")
     aggregate(out, models, bugs, samples)
+
+    # Self-contained, answer-free summary page for the whole sweep.
+    try:
+        from fbbench.report import write_summary
+        idx = write_summary(out, exp=exp, models=models, bugs=bugs, samples=samples,
+                            max_turns=args.max_turns, full_scan=args.full_scan,
+                            elapsed_s=elapsed)
+        print(f"  summary: {idx}")
+    except Exception as e:  # noqa: BLE001
+        print(f"  (summary generation skipped: {e})")
     return 0
 
 

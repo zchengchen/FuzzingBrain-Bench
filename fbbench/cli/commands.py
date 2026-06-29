@@ -315,16 +315,26 @@ def cmd_run(args) -> int:
 
 
 def cmd_report(args) -> int:
-    """(Re)generate the self-contained report.html for a finished run dir."""
+    """(Re)generate report.html for a run dir, or index.html for a sweep/exp dir."""
     from fbbench.runner.report import write_report
 
     d = Path(args.run_dir)
     if d.is_file():
         d = d.parent
-    if not (d / "score.json").is_file():
-        print(red(f"  no score.json under {d}"), file=sys.stderr)
+    if (d / "score.json").is_file():
+        out = write_report(d)
+        print(green(f"  wrote {out}"))
+        return 0
+    # No score.json here: treat it as a sweep/exp dir and build the summary.
+    from fbbench.report import write_summary
+    has_cells = any((sub / "score.json").is_file()
+                    for bug in d.glob("*") if bug.is_dir()
+                    for model in bug.glob("*") if model.is_dir()
+                    for sub in model.glob("seed-*"))
+    if not has_cells:
+        print(red(f"  no score.json (run) or cell tree (sweep) under {d}"), file=sys.stderr)
         return 1
-    out = write_report(d)
+    out = write_summary(d)
     print(green(f"  wrote {out}"))
     return 0
 
