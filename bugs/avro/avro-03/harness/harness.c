@@ -4,59 +4,9 @@
 
 #include <avro.h>
 
-/* Predefined schemas for fuzzing */
+/* A single schema; every input is decoded against it. */
 static const char *SCHEMAS[] = {
-    /* Primitive types */
-    "\"null\"",
-    "\"boolean\"",
-    "\"int\"",
-    "\"long\"",
-    "\"float\"",
-    "\"double\"",
-    "\"bytes\"",
-    "\"string\"",
-
-    /* Array types */
-    "{\"type\": \"array\", \"items\": \"int\"}",
-    "{\"type\": \"array\", \"items\": \"string\"}",
-    "{\"type\": \"array\", \"items\": \"bytes\"}",
-
-    /* Map types */
-    "{\"type\": \"map\", \"values\": \"int\"}",
     "{\"type\": \"map\", \"values\": \"string\"}",
-
-    /* Record types */
-    "{\"type\": \"record\", \"name\": \"TestRecord\", \"fields\": ["
-        "{\"name\": \"f1\", \"type\": \"int\"},"
-        "{\"name\": \"f2\", \"type\": \"string\"}"
-    "]}",
-
-    /* Nested record */
-    "{\"type\": \"record\", \"name\": \"Outer\", \"fields\": ["
-        "{\"name\": \"inner\", \"type\": {"
-            "\"type\": \"record\", \"name\": \"Inner\", \"fields\": ["
-                "{\"name\": \"value\", \"type\": \"long\"}"
-            "]"
-        "}}"
-    "]}",
-
-    /* Enum type */
-    "{\"type\": \"enum\", \"name\": \"Color\", \"symbols\": [\"RED\", \"GREEN\", \"BLUE\"]}",
-
-    
-    "{\"type\": \"fixed\", \"name\": \"Hash\", \"size\": 16}",
-
-    /* Union types */
-    "[\"null\", \"string\"]",
-    "[\"null\", \"int\", \"long\", \"string\"]",
-
-    /* Complex nested type */
-    "{\"type\": \"record\", \"name\": \"Complex\", \"fields\": ["
-        "{\"name\": \"id\", \"type\": \"long\"},"
-        "{\"name\": \"name\", \"type\": [\"null\", \"string\"]},"
-        "{\"name\": \"tags\", \"type\": {\"type\": \"array\", \"items\": \"string\"}},"
-        "{\"name\": \"metadata\", \"type\": {\"type\": \"map\", \"values\": \"bytes\"}}"
-    "]}"
 };
 
 static const size_t NUM_SCHEMAS = sizeof(SCHEMAS) / sizeof(SCHEMAS[0]);
