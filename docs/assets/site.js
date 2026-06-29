@@ -16,25 +16,26 @@ function escapeHtml(s) {
   }[c]));
 }
 
+// The challenges are SEALED: the public catalogue exposes only the neutral
+// alias, the project, the language, and the sanitizer — never the bug's title,
+// class, or location. renderTable reflects exactly that surface.
 function renderTable(bugs, target) {
   const rows = bugs.map(b => `
-    <tr data-status="${b.status}" data-class="${b.bug_class}" data-project="${b.project.toLowerCase()}">
+    <tr data-sanitizer="${escapeHtml(b.sanitizer || '')}" data-language="${escapeHtml(b.language || '')}" data-project="${b.project.toLowerCase()}" data-id="${escapeHtml(b.id)}">
+      <td class="id"><code>${escapeHtml(b.id)}</code></td>
       <td class="project">${escapeHtml(b.project)}</td>
-      <td class="title">${escapeHtml(b.title)}</td>
-      <td class="class"><code>${escapeHtml(b.bug_class)}</code></td>
-      <td class="status">${badge(b.status)}</td>
-      <td class="report"><a href="${b.report}" target="_blank" rel="noopener">report &rarr;</a></td>
+      <td class="language">${escapeHtml(b.language || '')}</td>
+      <td class="sanitizer"><code>${escapeHtml(b.sanitizer || '')}</code></td>
     </tr>
   `).join('');
   target.innerHTML = `
     <table class="bugs">
       <thead>
         <tr>
+          <th>Challenge</th>
           <th>Project</th>
-          <th>Title</th>
-          <th class="class">Class</th>
-          <th>Status</th>
-          <th>Report</th>
+          <th>Language</th>
+          <th>Sanitizer</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -44,37 +45,32 @@ function renderTable(bugs, target) {
 
 function attachFilters(allBugs, countEl) {
   const search = document.getElementById('search');
-  const statusSel = document.getElementById('f-status');
-  const classSel = document.getElementById('f-class');
+  const sanitizerSel = document.getElementById('f-sanitizer') || document.getElementById('f-class');
 
   function apply() {
     const q = (search.value || '').trim().toLowerCase();
-    const s = statusSel.value;
-    const c = classSel.value;
+    const san = sanitizerSel ? sanitizerSel.value : '';
     let shown = 0;
     document.querySelectorAll('table.bugs tbody tr').forEach(tr => {
-      const matchS = !s || tr.dataset.status === s;
-      const matchC = !c || tr.dataset.class === c;
-      const text = (tr.dataset.project + ' ' + tr.querySelector('td.title').textContent).toLowerCase();
+      const matchSan = !san || tr.dataset.sanitizer === san;
+      const text = (tr.dataset.id + ' ' + tr.dataset.project + ' ' + tr.dataset.language).toLowerCase();
       const matchQ = !q || text.includes(q);
-      const ok = matchS && matchC && matchQ;
+      const ok = matchSan && matchQ;
       tr.style.display = ok ? '' : 'none';
       if (ok) shown++;
     });
     countEl.textContent = `Showing ${shown} of ${allBugs.length}`;
   }
 
-  // Populate class filter from data
-  const classes = Array.from(new Set(allBugs.map(b => b.bug_class))).sort();
-  classes.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = c;
-    classSel.appendChild(opt);
-  });
-
-  search.addEventListener('input', apply);
-  statusSel.addEventListener('change', apply);
-  classSel.addEventListener('change', apply);
+  // Populate the sanitizer filter from data.
+  if (sanitizerSel) {
+    Array.from(new Set(allBugs.map(b => b.sanitizer).filter(Boolean))).sort().forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s; opt.textContent = s;
+      sanitizerSel.appendChild(opt);
+    });
+    sanitizerSel.addEventListener('change', apply);
+  }
+  if (search) search.addEventListener('input', apply);
   apply();
 }
