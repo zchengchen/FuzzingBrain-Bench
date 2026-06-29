@@ -42,7 +42,7 @@ def print_models() -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(prog="python -m fbbench.runner",
                                  description="FuzzingBrain Bench episode driver")
-    ap.add_argument("--bug", help="bug_id (e.g. net-snmp-02)")
+    ap.add_argument("--bug", help="bug_id (e.g. netsnmp-vacm-parse-npd)")
     ap.add_argument("--model", default="claude-opus-4-7", help="model id (claude*/gpt*/gemini*)")
     ap.add_argument("--max-turns", type=int, default=300,
                     help="turn budget per episode (default 300, matches ExploitBench v8.yaml)")
@@ -164,6 +164,8 @@ def main() -> int:
         "turns_used": result.turns_used,
         "duration_s": result.duration_s,
     }
+    if result.error:
+        score["error"] = result.error
     cost = {"model": result.model,
             **cost_usd(result.model, result.input_tokens, result.output_tokens,
                        result.cache_read_tokens, result.cache_write_tokens)}

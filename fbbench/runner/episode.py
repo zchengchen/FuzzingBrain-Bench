@@ -64,6 +64,7 @@ class EpisodeResult:
     refusal_retries: int = 0
     malformed_retries: int = 0
     last_grade: dict | None = None
+    error: str | None = None
 
 
 def neutral_tools(mcp: MCPClient) -> list[dict]:
@@ -309,6 +310,18 @@ def run_episode(
             tlog({"event": "budget_note", "turn": turn, "note": note})
         else:
             result.terminated_reason = "max_turns"
+    except Exception as e:
+        # A mid-run failure (LLM transport error, oracle/docker fault, etc.)
+        # must NOT leave a half-written run dir. Record it on the result and
+        # return normally so the caller still emits score.json/cost.json with
+        # terminated_reason="error" — a crashed run stays distinguishable from
+        # an honest "ran and scored 0", and a sweep never loses the row.
+        # KeyboardInterrupt is a BaseException, not Exception, so Ctrl-C still
+        # propagates and aborts the sweep as expected.
+        result.terminated_reason = "error"
+        result.error = f"{type(e).__name__}: {e}"
+        log({"event": "error", "turn": result.turns_used, "error": result.error})
+        tlog({"event": "error", "turn": result.turns_used, "error": result.error})
     finally:
         result.duration_s = time.time() - start
         log({"event": "end", "terminated_reason": result.terminated_reason,
